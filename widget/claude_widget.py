@@ -64,7 +64,9 @@ RED    = "#f87171"
 ACCENT = "#d97757"
 
 ANIM_BG = "#111111"   # slightly darker well for the animation panel
+CHROME  = "#010101"   # transparent key — this exact colour is made invisible by the OS
 
+CORNER_R = 12
 W, H = 258, 272
 
 # ── Credential & API helpers ──────────────────────────────────────────────────
@@ -174,7 +176,8 @@ class ClaudeWidget:
         self.root.overrideredirect(True)
         self.root.attributes("-topmost", True)
         self.root.attributes("-alpha", 0.93)
-        self.root.configure(bg=BORDER)
+        self.root.configure(bg=CHROME)
+        self.root.wm_attributes("-transparentcolor", CHROME)
 
         sx = self.root.winfo_screenwidth()
         sy = self.root.winfo_screenheight()
@@ -223,16 +226,7 @@ class ClaudeWidget:
         try:
             import ctypes
             hwnd = self.root.winfo_id()
-
-            # Clip window to a rounded-rectangle region (works with overrideredirect)
-            radius = 10   # CreateRoundRectRgn uses ellipse diameter, so 10 → ~5 px radius
-            hrgn = ctypes.windll.gdi32.CreateRoundRectRgn(
-                0, 0, W + 1, H + 1, radius, radius
-            )
-            ctypes.windll.user32.SetWindowRgn(hwnd, hrgn, True)
-
-            # Set window icon via WM_SETICON so it shows correctly in alt+tab
-            ico = SCRIPT_DIR / "claudinho.ico"
+            ico  = SCRIPT_DIR / "claudinho.ico"
             if ico.exists():
                 hicon = ctypes.windll.user32.LoadImageW(
                     None, str(ico), 1, 0, 0, 0x10 | 0x40
@@ -326,8 +320,25 @@ class ClaudeWidget:
     # ── UI construction ───────────────────────────────────────────────────────
 
     def _build_ui(self):
+        # PIL-rendered rounded background — corners outside the radius are CHROME,
+        # which wm_attributes("-transparentcolor") makes fully transparent.
+        bg_rgba = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        ImageDraw.Draw(bg_rgba).rounded_rectangle(
+            [0, 0, W - 1, H - 1], radius=CORNER_R,
+            fill=BG, outline=BORDER, width=1,
+        )
+        chrome_rgb = tuple(int(CHROME[i:i+2], 16) for i in (1, 3, 5))
+        bg_rgb = Image.new("RGB", (W, H), chrome_rgb)
+        bg_rgb.paste(bg_rgba.convert("RGB"), mask=bg_rgba.split()[3])
+        self._bg_photo = ImageTk.PhotoImage(bg_rgb)
+
+        bg_lbl = tk.Label(self.root, image=self._bg_photo, bd=0,
+                          padx=0, pady=0, bg=CHROME)
+        bg_lbl.place(x=0, y=0, width=W, height=H)
+
         inner = tk.Frame(self.root, bg=BG)
-        inner.pack(fill=tk.BOTH, expand=True, padx=1, pady=1)
+        inner.place(x=CORNER_R // 2, y=2,
+                    width=W - CORNER_R, height=H - 4)
 
         # ── Title bar ─────────────────────────────────────────────────────
         bar = tk.Frame(inner, bg=BG, height=30)
