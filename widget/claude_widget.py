@@ -65,7 +65,7 @@ ACCENT = "#d97757"
 
 ANIM_BG = "#111111"   # slightly darker well for the animation panel
 
-W, H = 258, 258
+W, H = 258, 272
 
 # ── Credential & API helpers ──────────────────────────────────────────────────
 
@@ -363,7 +363,7 @@ class ClaudeWidget:
         # ── Animation panel ───────────────────────────────────────────────
         anim_size = 20 * CELL   # 80 px
         anim_panel = tk.Frame(inner, bg=ANIM_BG,
-                              height=anim_size + 16, width=W - 2)
+                              height=anim_size + 30, width=W - 2)
         anim_panel.pack(fill=tk.X)
         anim_panel.pack_propagate(False)
 
