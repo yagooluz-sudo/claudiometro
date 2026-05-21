@@ -224,22 +224,23 @@ class ClaudeWidget:
             import ctypes
             hwnd = self.root.winfo_id()
 
-            # Rounded corners
-            pref = ctypes.c_int(2)
-            ctypes.windll.dwmapi.DwmSetWindowAttribute(
-                hwnd, 33, ctypes.byref(pref), ctypes.sizeof(pref)
+            # Clip window to a rounded-rectangle region (works with overrideredirect)
+            radius = 10   # CreateRoundRectRgn uses ellipse diameter, so 10 → ~5 px radius
+            hrgn = ctypes.windll.gdi32.CreateRoundRectRgn(
+                0, 0, W + 1, H + 1, radius, radius
             )
+            ctypes.windll.user32.SetWindowRgn(hwnd, hrgn, True)
 
             # Set window icon via WM_SETICON so it shows correctly in alt+tab
             ico = SCRIPT_DIR / "claudinho.ico"
             if ico.exists():
                 hicon = ctypes.windll.user32.LoadImageW(
                     None, str(ico), 1, 0, 0, 0x10 | 0x40
-                )   # IMAGE_ICON | LR_LOADFROMFILE | LR_DEFAULTSIZE
+                )
                 if hicon:
                     WM_SETICON = 0x0080
-                    ctypes.windll.user32.SendMessageW(hwnd, WM_SETICON, 1, hicon)  # big
-                    ctypes.windll.user32.SendMessageW(hwnd, WM_SETICON, 0, hicon)  # small
+                    ctypes.windll.user32.SendMessageW(hwnd, WM_SETICON, 1, hicon)
+                    ctypes.windll.user32.SendMessageW(hwnd, WM_SETICON, 0, hicon)
         except Exception:
             pass
 
