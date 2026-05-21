@@ -1,5 +1,54 @@
 # Clawdmeter
 
+> **This is a personal fork of [HermannBjorgvin/Clawdmeter](https://github.com/HermannBjorgvin/Clawdmeter).**
+> All credit for the original concept, firmware, ESP32 hardware integration, BLE protocol, and
+> pixel-art animations goes entirely to **Hermann Björgvin** ([@HermannBjorgvin](https://github.com/HermannBjorgvin)).
+> This fork adds a **Windows desktop widget** ("Consumo do Claudinho") on top of the original project.
+> It has no commercial purpose whatsoever.
+
+---
+
+> ⚠️ **Licensing warning (inherited from original):** This repository uses Anthropic's proprietary fonts
+> (Tiempos Text, Styrene B) and the copyrighted Clawd mascot without explicit permission, exactly as the
+> original project does. Neither this fork nor the original are licensed for redistribution or commercial use.
+> Please be aware of this before forking or copying any code.
+
+---
+
+## What this fork adds
+
+### Desktop Widget — "Consumo do Claudinho" (Windows)
+
+A floating always-on-top overlay for Windows that shows your Claude Code session (5h) and weekly (7d)
+utilization directly on your desktop — no ESP32 hardware required.
+
+- Pixel-art Clawd animations that react to your usage rate (idle → work → dance)
+- Two progress bars with reset countdowns
+- System tray support, drag to reposition, position saved between sessions
+- Icon generated from the pixel-art assets already in the repo
+- Fully in Portuguese 🇧🇷
+
+**Quick start:**
+
+```powershell
+cd widget
+.\install.ps1
+```
+
+See [`widget/`](widget/) for full details.
+
+---
+
+## 💛 Big thanks to the original creator
+
+Huge thank you to **Hermann Björgvin** for building and open-sourcing Clawdmeter.
+The original project is a beautifully crafted piece of work — the firmware architecture,
+the BLE protocol, the pixel-art animation engine, and the daemon are all his.
+This fork would not exist without it. Go star the original:
+👉 **https://github.com/HermannBjorgvin/Clawdmeter**
+
+---
+
 A small ESP32 dashboard I made for my desk to keep an eye on Claude Code usage.
 
 It runs on a [Waveshare ESP32-S3-Touch-AMOLED-2.16](https://www.waveshare.com/esp32-s3-touch-amoled-2.16.htm?&aff_id=149786) and pairs with my laptop over Bluetooth, the splash screen plays pixel-art Clawd animations that get
