@@ -349,7 +349,7 @@ class ClaudeWidget:
 
         # Resize grip — bottom-right corner
         grip = tk.Label(self.root, text="◢", bg=BG, fg=DIM,
-                        font=("Segoe UI", 8), cursor="size_nw_se")
+                        font=("Inter", 8), cursor="size_nw_se")
         grip.place(relx=1.0, rely=1.0, anchor="se", x=-4, y=-4)
         grip.bind("<Button-1>",       self._resize_start)
         grip.bind("<B1-Motion>",      self._resize_move)
@@ -362,19 +362,19 @@ class ClaudeWidget:
         bar.pack(fill=tk.X)
         bar.pack_propagate(False)
 
-        dot = tk.Label(bar, text="●", bg=BG, fg=ACCENT, font=("Segoe UI", 9))
+        dot = tk.Label(bar, text="●", bg=BG, fg=ACCENT, font=("Inter", 9))
         dot.pack(side=tk.LEFT, padx=(10, 4))
 
         title = tk.Label(bar, text="Consumo do Claudinho", bg=BG, fg=TEXT,
-                         font=("Segoe UI", 9, "bold"))
+                         font=("Inter", 9, "bold"))
         title.pack(side=tk.LEFT)
 
-        self._lbl_ts = tk.Label(bar, text="", bg=BG, fg=DIM, font=("Segoe UI", 7))
+        self._lbl_ts = tk.Label(bar, text="", bg=BG, fg=DIM, font=("Inter", 7))
         self._lbl_ts.pack(side=tk.RIGHT, padx=(0, 6))
 
         # Hide button — bound AFTER drag loop so it keeps its binding
         btn_hide = tk.Label(bar, text="–", bg=BG, fg=DIM,
-                            font=("Segoe UI", 12), cursor="hand2")
+                            font=("Inter", 12), cursor="hand2")
         btn_hide.pack(side=tk.RIGHT, padx=(0, 2))
 
         # Drag only on the bar background and non-interactive labels
@@ -413,7 +413,7 @@ class ClaudeWidget:
         self._blk_weekly.pack(fill=tk.X)
 
         self._lbl_err = tk.Label(inner, text="", bg=BG, fg=DIM,
-                                 font=("Segoe UI", 8), wraplength=W - 28,
+                                 font=("Inter", 8), wraplength=W - 28,
                                  justify=tk.LEFT)
 
         self._set_loading()
@@ -425,17 +425,17 @@ class ClaudeWidget:
         header.pack(fill=tk.X)
 
         tk.Label(header, text=label, bg=BG, fg=DIM,
-                 font=("Segoe UI", 7, "bold")).pack(side=tk.LEFT)
+                 font=("Inter", 7, "bold")).pack(side=tk.LEFT)
 
         lbl_pct = tk.Label(header, text="–", bg=BG, fg=TEXT,
-                           font=("Segoe UI", 9, "bold"))
+                           font=("Inter", 9, "bold"))
         lbl_pct.pack(side=tk.RIGHT)
 
         bar = tk.Canvas(frame, bg=BAR_BG, height=5,
                         highlightthickness=0, bd=0)
         bar.pack(fill=tk.X, pady=(3, 2))
 
-        lbl_reset = tk.Label(frame, text="", bg=BG, fg=DIM, font=("Segoe UI", 7))
+        lbl_reset = tk.Label(frame, text="", bg=BG, fg=DIM, font=("Inter", 7))
         lbl_reset.pack(anchor=tk.W)
 
         frame._lbl_pct   = lbl_pct
@@ -555,7 +555,7 @@ class ClaudeWidget:
         d.ellipse([bx, by, bx + b, by + b], fill=bar_color(pct))
 
         try:
-            fnt = ImageFont.truetype("C:/Windows/Fonts/segoeui.ttf", b - 2)
+            fnt = ImageFont.truetype(str(SCRIPT_DIR / "fonts" / "Inter-Regular.ttf"), b - 2)
         except OSError:
             fnt = ImageFont.load_default()
 
