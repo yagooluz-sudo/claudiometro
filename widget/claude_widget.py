@@ -67,7 +67,9 @@ ANIM_BG = "#111111"   # slightly darker well for the animation panel
 CHROME  = "#010101"   # transparent key — this exact colour is made invisible by the OS
 
 CORNER_R = 12
-W, H = 258, 272
+W, H    = 258, 272   # default size
+MIN_W   = 220
+MIN_H   = 240
 
 # ── Credential & API helpers ──────────────────────────────────────────────────
 
@@ -182,9 +184,11 @@ class ClaudeWidget:
         sx = self.root.winfo_screenwidth()
         sy = self.root.winfo_screenheight()
         pos = self._load_position()
-        x = pos.get("x", sx - W - 20)
-        y = pos.get("y", sy - H - 60)
-        self.root.geometry(f"{W}x{H}+{x}+{y}")
+        cw = pos.get("w", W)
+        ch = pos.get("h", H)
+        x  = pos.get("x", sx - cw - 20)
+        y  = pos.get("y", sy - ch - 60)
+        self.root.geometry(f"{cw}x{ch}+{x}+{y}")
 
         # Animation state
         self._anims: dict = {}
@@ -216,9 +220,10 @@ class ClaudeWidget:
 
     def _save_position(self):
         POSITION_FILE.parent.mkdir(parents=True, exist_ok=True)
-        POSITION_FILE.write_text(
-            json.dumps({"x": self.root.winfo_x(), "y": self.root.winfo_y()})
-        )
+        POSITION_FILE.write_text(json.dumps({
+            "x": self.root.winfo_x(), "y": self.root.winfo_y(),
+            "w": self.root.winfo_width(), "h": self.root.winfo_height(),
+        }))
 
     # ── Windows 11 rounded corners ────────────────────────────────────────────
 
@@ -322,23 +327,35 @@ class ClaudeWidget:
     def _build_ui(self):
         # PIL-rendered rounded background — corners outside the radius are CHROME,
         # which wm_attributes("-transparentcolor") makes fully transparent.
-        bg_rgba = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        cw = self.root.winfo_width() or W
+        ch = self.root.winfo_height() or H
+        bg_rgba = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
         ImageDraw.Draw(bg_rgba).rounded_rectangle(
-            [0, 0, W - 1, H - 1], radius=CORNER_R,
+            [0, 0, cw - 1, ch - 1], radius=CORNER_R,
             fill=BG, outline=BORDER, width=1,
         )
         chrome_rgb = tuple(int(CHROME[i:i+2], 16) for i in (1, 3, 5))
-        bg_rgb = Image.new("RGB", (W, H), chrome_rgb)
+        bg_rgb = Image.new("RGB", (cw, ch), chrome_rgb)
         bg_rgb.paste(bg_rgba.convert("RGB"), mask=bg_rgba.split()[3])
         self._bg_photo = ImageTk.PhotoImage(bg_rgb)
 
-        bg_lbl = tk.Label(self.root, image=self._bg_photo, bd=0,
-                          padx=0, pady=0, bg=CHROME)
-        bg_lbl.place(x=0, y=0, width=W, height=H)
+        self._bg_lbl = tk.Label(self.root, image=self._bg_photo, bd=0,
+                               padx=0, pady=0, bg=CHROME)
+        self._bg_lbl.place(x=0, y=0, width=W, height=H)
 
-        inner = tk.Frame(self.root, bg=BG)
-        inner.place(x=CORNER_R // 2, y=2,
-                    width=W - CORNER_R, height=H - 4)
+        self._inner = tk.Frame(self.root, bg=BG)
+        self._inner.place(x=CORNER_R // 2, y=2,
+                          width=W - CORNER_R, height=H - 4)
+
+        # Resize grip — bottom-right corner
+        grip = tk.Label(self.root, text="◢", bg=BG, fg=DIM,
+                        font=("Segoe UI", 8), cursor="size_nw_se")
+        grip.place(relx=1.0, rely=1.0, anchor="se", x=-4, y=-4)
+        grip.bind("<Button-1>",       self._resize_start)
+        grip.bind("<B1-Motion>",      self._resize_move)
+        grip.bind("<ButtonRelease-1>", lambda _: self._save_position())
+
+        inner = self._inner
 
         # ── Title bar ─────────────────────────────────────────────────────
         bar = tk.Frame(inner, bg=BG, height=30)
@@ -488,6 +505,35 @@ class ClaudeWidget:
 
     def _drag_move(self, e: tk.Event):
         self.root.geometry(f"+{e.x_root - self._ox}+{e.y_root - self._oy}")
+
+    # ── Resize ────────────────────────────────────────────────────────────────
+
+    def _resize_start(self, e: tk.Event):
+        self._rx = e.x_root
+        self._ry = e.y_root
+        self._rw = self.root.winfo_width()
+        self._rh = self.root.winfo_height()
+
+    def _resize_move(self, e: tk.Event):
+        nw = max(MIN_W, self._rw + e.x_root - self._rx)
+        nh = max(MIN_H, self._rh + e.y_root - self._ry)
+        self.root.geometry(f"{nw}x{nh}")
+        self._redraw_bg(nw, nh)
+
+    def _redraw_bg(self, w: int, h: int):
+        bg_rgba = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        ImageDraw.Draw(bg_rgba).rounded_rectangle(
+            [0, 0, w - 1, h - 1], radius=CORNER_R,
+            fill=BG, outline=BORDER, width=1,
+        )
+        chrome_rgb = tuple(int(CHROME[i:i+2], 16) for i in (1, 3, 5))
+        bg_rgb = Image.new("RGB", (w, h), chrome_rgb)
+        bg_rgb.paste(bg_rgba.convert("RGB"), mask=bg_rgba.split()[3])
+        self._bg_photo = ImageTk.PhotoImage(bg_rgb)
+        self._bg_lbl.configure(image=self._bg_photo)
+        self._bg_lbl.place(x=0, y=0, width=w, height=h)
+        self._inner.place(x=CORNER_R // 2, y=2,
+                          width=w - CORNER_R, height=h - 4)
 
     # ── System tray ───────────────────────────────────────────────────────────
 
