@@ -184,11 +184,11 @@ class ClaudeWidget:
         sx = self.root.winfo_screenwidth()
         sy = self.root.winfo_screenheight()
         pos = self._load_position()
-        cw = pos.get("w", W)
-        ch = pos.get("h", H)
-        x  = pos.get("x", sx - cw - 20)
-        y  = pos.get("y", sy - ch - 60)
-        self.root.geometry(f"{cw}x{ch}+{x}+{y}")
+        self._cw = pos.get("w", W)
+        self._ch = pos.get("h", H)
+        x  = pos.get("x", sx - self._cw - 20)
+        y  = pos.get("y", sy - self._ch - 60)
+        self.root.geometry(f"{self._cw}x{self._ch}+{x}+{y}")
 
         # Animation state
         self._anims: dict = {}
@@ -327,25 +327,10 @@ class ClaudeWidget:
     def _build_ui(self):
         # PIL-rendered rounded background — corners outside the radius are CHROME,
         # which wm_attributes("-transparentcolor") makes fully transparent.
-        cw = self.root.winfo_width() or W
-        ch = self.root.winfo_height() or H
-        bg_rgba = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
-        ImageDraw.Draw(bg_rgba).rounded_rectangle(
-            [0, 0, cw - 1, ch - 1], radius=CORNER_R,
-            fill=BG, outline=BORDER, width=1,
-        )
-        chrome_rgb = tuple(int(CHROME[i:i+2], 16) for i in (1, 3, 5))
-        bg_rgb = Image.new("RGB", (cw, ch), chrome_rgb)
-        bg_rgb.paste(bg_rgba.convert("RGB"), mask=bg_rgba.split()[3])
-        self._bg_photo = ImageTk.PhotoImage(bg_rgb)
-
-        self._bg_lbl = tk.Label(self.root, image=self._bg_photo, bd=0,
-                               padx=0, pady=0, bg=CHROME)
-        self._bg_lbl.place(x=0, y=0, width=W, height=H)
-
+        self._bg_lbl = tk.Label(self.root, bd=0, padx=0, pady=0, bg=CHROME)
+        self._bg_lbl.place(x=0, y=0)
         self._inner = tk.Frame(self.root, bg=BG)
-        self._inner.place(x=CORNER_R // 2, y=2,
-                          width=W - CORNER_R, height=H - 4)
+        self._redraw_bg(self._cw, self._ch)
 
         # Resize grip — bottom-right corner
         grip = tk.Label(self.root, text="◢", bg=BG, fg=DIM,
