@@ -1,63 +1,63 @@
-# Consumo do Claudinho — Desktop Widget (Windows)
+# Consumo do Claudinho — Widget de Desktop (Windows)
 
-A floating always-on-top desktop widget for Windows that shows your Claude Code
-session (5h) and weekly (7d) utilization — no ESP32 hardware needed.
+Widget flutuante always-on-top para Windows que exibe o consumo da sua sessão (5h)
+e semanal (7d) do Claude Code — sem precisar de hardware ESP32.
 
-Built on top of [HermannBjorgvin/Clawdmeter](https://github.com/HermannBjorgvin/Clawdmeter).
-All credit for the original project goes to its creator.
+Construído sobre o [HermannBjorgvin/Clawdmeter](https://github.com/HermannBjorgvin/Clawdmeter).
+Todo o crédito pelo projeto original vai ao seu criador.
 
-![Widget preview](../assets/demo.jpeg)
+![Prévia do widget](../assets/demo.jpeg)
 
-## Features
+## Funcionalidades
 
-- Pixel-art Clawd animations sourced from [claudepix.vercel.app](https://claudepix.vercel.app) that react to your usage rate:
-  - **0–39%** → idle (blink, breathe, look around)
-  - **40–69%** → work (coding, think)
+- Animações pixel-art do Clawd vindas de [claudepix.vercel.app](https://claudepix.vercel.app) que reagem ao seu uso:
+  - **0–39%** → idle (pisca, respira, olha ao redor)
+  - **40–69%** → work (codando, pensando)
   - **70–100%** → dance (bounce, sway, djmix…)
-- Two progress bars: **SESSÃO · 5H** and **SEMANAL · 7D** with reset countdowns
-- Color shifts green → amber → red as utilization climbs
-- True transparent rounded corners (12px radius)
-- System tray icon with live % badge — minimize and restore from tray
-- Drag to reposition; position saved between sessions
-- Auto-polls every 60 s using your existing Claude Code credentials
+- Duas barras de progresso: **SESSÃO · 5H** e **SEMANAL · 7D** com contagem regressiva para reset
+- Cores que mudam de verde → âmbar → vermelho conforme o uso aumenta
+- Cantos arredondados transparentes (raio de 12px)
+- Ícone na bandeja do sistema com badge de % ao vivo — minimiza e restaura pela bandeja
+- Arraste para reposicionar; posição salva entre sessões
+- Atualiza automaticamente a cada 60s usando suas credenciais do Claude Code
 
-## Requirements
+## Requisitos
 
 - Windows 10/11
 - Python 3.9+
-- Claude Code installed and signed in (credentials read from `~/.claude/.credentials.json`)
+- Claude Code instalado e logado (credenciais lidas de `~/.claude/.credentials.json`)
 
-## Installation
+## Instalação
 
 ```powershell
 cd widget
 .\install.ps1
 ```
 
-The installer will:
-1. Create a Python venv in `widget/.venv`
-2. Install dependencies (`httpx`, `pystray`, `Pillow`)
-3. Ask if you want a Windows Startup shortcut (auto-launch at login)
-4. Optionally launch the widget immediately
+O instalador vai:
+1. Criar um venv Python em `widget/.venv`
+2. Instalar dependências (`httpx`, `pystray`, `Pillow`)
+3. Perguntar se quer atalho na Inicialização do Windows (auto-iniciar no login)
+4. Opcionalmente abrir o widget imediatamente
 
-## Running manually
+## Executar manualmente
 
 ```powershell
-# From the widget/ folder
+# Da pasta widget/
 .\.venv\Scripts\pythonw.exe claude_widget.py
 ```
 
-Use `pythonw.exe` (not `python.exe`) to run without a console window.
+Use `pythonw.exe` (não `python.exe`) para rodar sem janela de console.
 
-## Does it increase Claude consumption?
+## Isso aumenta o consumo do Claude?
 
-Technically yes, but negligibly. Every 60 seconds the widget sends one API call
-to `claude-haiku-4-5-20251001` with `max_tokens: 1` — the goal is the
-rate-limit headers in the response, not the reply itself. The original project
-describes this as *"one token of Haiku, basically free"*.
+Tecnicamente sim, mas de forma negligenciável. A cada 60 segundos o widget faz uma chamada
+à API para o `claude-haiku-4-5-20251001` com `max_tokens: 1` — o objetivo são os
+headers de rate-limit na resposta, não a resposta em si. O projeto original descreve isso
+como *"um token de Haiku, praticamente de graça"*.
 
-## Credits
+## Créditos
 
-- Original project, firmware, BLE protocol, daemon, and animations pipeline: **Hermann Björgvin** — https://github.com/HermannBjorgvin/Clawdmeter
-- Pixel-art Clawd sprites: **[@amaanbuilds](https://x.com/amaanbuilds)** — https://claudepix.vercel.app
-- Desktop widget (this folder): personal fork, no commercial purpose
+- Projeto original, firmware, protocolo BLE, daemon e pipeline de animações: **Hermann Björgvin** — https://github.com/HermannBjorgvin/Clawdmeter
+- Sprites pixel-art do Clawd: **[@amaanbuilds](https://x.com/amaanbuilds)** — https://claudepix.vercel.app
+- Widget de desktop (esta pasta): fork pessoal, sem fins comerciais

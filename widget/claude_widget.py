@@ -188,6 +188,9 @@ class ClaudeWidget:
         self._ch = pos.get("h", H)
         x  = pos.get("x", sx - self._cw - 20)
         y  = pos.get("y", sy - self._ch - 60)
+        # Clamp so the title bar is always reachable on the primary screen
+        x = max(-self._cw + 100, min(x, sx - 100))
+        y = max(0, min(y, sy - 40))
         self.root.geometry(f"{self._cw}x{self._ch}+{x}+{y}")
 
         # Animation state
@@ -284,7 +287,10 @@ class ClaudeWidget:
 
         img   = self._render_frame(self._current_anim, idx)
         photo = ImageTk.PhotoImage(img)
-        self._anim_label.configure(image=photo)
+        try:
+            self._anim_label.configure(image=photo)
+        except tk.TclError:
+            return   # widget destroyed; stop ticking
         self._anim_photo = photo   # prevent GC
 
         hold = frames[idx].get("hold", 100)
