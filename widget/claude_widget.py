@@ -66,10 +66,9 @@ ACCENT = "#d97757"
 ANIM_BG = "#111111"   # slightly darker well for the animation panel
 CHROME  = "#010101"   # transparent key — this exact colour is made invisible by the OS
 
-CORNER_R = 12
-W, H    = 258, 272   # default size
-MIN_W   = 220
-MIN_H   = 240
+CORNER_R   = 12
+W, H       = 258, 272   # default size
+ANIM_HIDE_H = 160       # hide animation panel when window height is below this
 
 # ── Credential & API helpers ──────────────────────────────────────────────────
 
@@ -110,7 +109,8 @@ def fetch_usage() -> dict:
     except httpx.HTTPError as exc:
         return {"error": f"Erro de rede:\n{exc}"}
 
-    if resp.status_code >= 400:
+    # 429 = throttled/over-limit; headers still carry usage data — don't bail
+    if resp.status_code >= 400 and resp.status_code != 429:
         return {"error": f"API retornou {resp.status_code}"}
 
     now = time.time()
@@ -128,7 +128,7 @@ def fetch_usage() -> dict:
 
     def pct(util):
         try:
-            return min(100, int(round(float(util) * 100)))
+            return int(round(float(util) * 100))   # no cap — allow >100
         except ValueError:
             return 0
 
@@ -142,6 +142,8 @@ def fetch_usage() -> dict:
 
 
 def bar_color(pct: int) -> str:
+    if pct > 100:
+        return "#ff2222"   # brighter red for over-limit
     if pct >= 90:
         return RED
     if pct >= 70:
@@ -352,6 +354,7 @@ class ClaudeWidget:
         bar = tk.Frame(inner, bg=BG, height=30)
         bar.pack(fill=tk.X)
         bar.pack_propagate(False)
+        self._bar_frame = bar
 
         dot = tk.Label(bar, text="●", bg=BG, fg=ACCENT, font=("Inter", 9))
         dot.pack(side=tk.LEFT, padx=(10, 4))
@@ -378,20 +381,22 @@ class ClaudeWidget:
         btn_hide.bind("<Button-1>", lambda _: self._hide_to_tray())
 
         # ── Divider ───────────────────────────────────────────────────────
-        tk.Frame(inner, bg=BORDER, height=1).pack(fill=tk.X)
+        self._div1 = tk.Frame(inner, bg=BORDER, height=1)
+        self._div1.pack(fill=tk.X)
 
         # ── Animation panel ───────────────────────────────────────────────
         anim_size = 20 * CELL   # 80 px
-        anim_panel = tk.Frame(inner, bg=ANIM_BG,
-                              height=anim_size + 30, width=W - 2)
-        anim_panel.pack(fill=tk.X)
-        anim_panel.pack_propagate(False)
+        self._anim_panel = tk.Frame(inner, bg=ANIM_BG,
+                                    height=anim_size + 30, width=W - 2)
+        self._anim_panel.pack(fill=tk.X)
+        self._anim_panel.pack_propagate(False)
 
-        self._anim_label = tk.Label(anim_panel, bg=ANIM_BG, bd=0)
+        self._anim_label = tk.Label(self._anim_panel, bg=ANIM_BG, bd=0)
         self._anim_label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
         # ── Divider ───────────────────────────────────────────────────────
-        tk.Frame(inner, bg=BORDER, height=1).pack(fill=tk.X)
+        self._div2 = tk.Frame(inner, bg=BORDER, height=1)
+        self._div2.pack(fill=tk.X)
 
         # ── Metrics ───────────────────────────────────────────────────────
         content = tk.Frame(inner, bg=BG)
@@ -445,7 +450,7 @@ class ClaudeWidget:
             h = block._bar.winfo_height()
             block._bar.delete("all")
             if w > 1:
-                fill_w = max(0, min(w, w * pct // 100))
+                fill_w = max(0, min(w, w * min(pct, 100) // 100))
                 if fill_w:
                     block._bar.create_rectangle(0, 0, fill_w, h,
                                                 fill=color, outline="")
@@ -506,10 +511,32 @@ class ClaudeWidget:
         self._rh = self.root.winfo_height()
 
     def _resize_move(self, e: tk.Event):
-        nw = max(MIN_W, self._rw + e.x_root - self._rx)
-        nh = max(MIN_H, self._rh + e.y_root - self._ry)
+        nw = max(100, self._rw + e.x_root - self._rx)
+        nh = max(60,  self._rh + e.y_root - self._ry)
         self.root.geometry(f"{nw}x{nh}")
         self._redraw_bg(nw, nh)
+        self._toggle_anim_panel(nh)
+
+    def _toggle_anim_panel(self, h: int):
+        show = h >= ANIM_HIDE_H
+        mapped = self._anim_panel.winfo_ismapped()
+        if show == mapped:
+            return
+        if show:
+            self._div1.pack(fill=tk.X, after=self._bar_frame)
+            self._anim_panel.pack(fill=tk.X, after=self._div1)
+            self._div2.pack(fill=tk.X, after=self._anim_panel)
+            self._start_animation_for_mood(self._current_mood)
+        else:
+            if self._anim_after:
+                self.root.after_cancel(self._anim_after)
+                self._anim_after = None
+            if self._rotate_after:
+                self.root.after_cancel(self._rotate_after)
+                self._rotate_after = None
+            self._div1.pack_forget()
+            self._anim_panel.pack_forget()
+            self._div2.pack_forget()
 
     def _redraw_bg(self, w: int, h: int):
         bg_rgba = Image.new("RGBA", (w, h), (0, 0, 0, 0))
